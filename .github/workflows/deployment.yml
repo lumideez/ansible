@@ -1,0 +1,28 @@
+name: Ansible Payment Deployment
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v2
+
+      - name: Install Ansible
+        run: sudo apt update && sudo apt install -y ansible
+
+      - name: Run Payment Gateway Deployment
+        run: ansible-playbook -i inventories/production playbooks/deploy_payment_gateway.yml
+
+      - name: Run PCI Compliance Check
+        run: ansible-playbook -i inventories/production playbooks/pci_compliance_check.yml
+
+      - name: Generate Infrastructure Report
+        run: |
+          ansible -i inventories/production all -m setup --tree out/
+          pip install ansible-cmdb
+          ansible-cmdb out/ > docs/payment_infra_report.html

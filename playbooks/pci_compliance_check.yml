@@ -1,0 +1,27 @@
+---
+- name: Run PCI-DSS Compliance Checks
+  hosts: payment_servers
+  become: true
+
+  tasks:
+    - name: Ensure password policy is enforced
+      lineinfile:
+        path: /etc/login.defs
+        regexp: '^PASS_MAX_DAYS'
+        line: 'PASS_MAX_DAYS   90'
+
+    - name: Ensure payment gateway logs have correct permissions
+      file:
+        path: /var/log/payment/
+        owner: root
+        group: root
+        mode: '0640'
+
+    - name: Check if firewall is enabled
+      command: ufw status
+      register: firewall_status
+
+    - name: Fail if firewall is not active
+      fail:
+        msg: "Firewall is not enabled!"
+      when: "'inactive' in firewall_status.stdout"

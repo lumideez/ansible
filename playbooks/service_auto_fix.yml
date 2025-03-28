@@ -1,0 +1,26 @@
+---
+- name: Auto-Remediate Payment Gateway Service
+  hosts: payment_servers
+  become: true
+
+  tasks:
+    - name: Check payment service status
+      shell: systemctl is-active payment-gateway
+      register: service_status
+
+    - name: Restart service if inactive
+      systemd:
+        name: payment-gateway
+        state: restarted
+      when: service_status.stdout != "active"
+
+    - name: Notify admins if service restart fails
+      mail:
+        host: smtp.yourcompany.com
+        port: 587
+        username: your_email@yourcompany.com
+        password: your_password
+        to: admin@yourcompany.com
+        subject: "Payment Gateway Service Issue"
+        body: "Service failed to restart on {{ inventory_hostname }}"
+      when: service_status.stdout != "active"

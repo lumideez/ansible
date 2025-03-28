@@ -1,0 +1,27 @@
+---
+- name: Renew SSL Certificates
+  hosts: payment_servers
+  become: true
+
+  tasks:
+    - name: Copy new SSL certificate
+      copy:
+        src: /path/to/new/certificate.pem
+        dest: /etc/ssl/certs/payment.pem
+        mode: '0644'
+
+    - name: Restart NGINX / Payment API Gateway
+      systemd:
+        name: nginx
+        state: restarted
+
+    - name: Validate SSL certificate
+      uri:
+        url: "https://{{ inventory_hostname }}"
+        validate_certs: yes
+      register: ssl_check
+
+    - name: Fail if SSL certificate check fails
+      fail:
+        msg: "SSL Certificate validation failed!"
+      when: ssl_check.status != 200

@@ -1,0 +1,28 @@
+---
+- name: Deploy Payment Gateway Configuration
+  hosts: payment_servers
+  become: true
+  vars:
+    payment_gateway_port: 443
+    gateway_config_path: "/etc/payment/gateway.conf"
+
+  tasks:
+    - name: Copy payment gateway config
+      template:
+        src: gateway.conf.j2
+        dest: "{{ gateway_config_path }}"
+        mode: 0644
+
+    - name: Restart payment service
+      systemd:
+        name: payment-gateway
+        state: restarted
+
+    - name: Verify payment service status
+      shell: systemctl is-active payment-gateway
+      register: payment_service_status
+
+    - name: Fail if payment service is not active
+      fail:
+        msg: "Payment service failed to start!"
+      when: payment_service_status.stdout != "active"

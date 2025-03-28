@@ -1,0 +1,10 @@
+# Ansible
+*.retry
+*.log
+
+# Python
+__pycache__/
+*.pyc
+
+# Others
+out/
